@@ -219,11 +219,13 @@ public final class ScriptServer implements AutoCloseable {
         }
     }
 
-    private void validateSyntax(String script) throws Exception {
-        File check = new File(root, "syntax-check.js");
-        Files.writeString(check.toPath(), script, StandardCharsets.UTF_8);
-        // Android's WebView is the actual JS engine; syntax is checked in an isolated temporary frame
-        // before activation by the editor UI. The server enforces size and UTF-8 at the transport layer.
+    private void validateSyntax(String script) {
+        if (script.getBytes(StandardCharsets.UTF_8).length > MAX_BODY) {
+            throw new IllegalArgumentException("Script exceeds 1 MiB");
+        }
+        // The desktop editor performs a JavaScript parser check with new Function()
+        // before sending. The server keeps transport/storage validation independent
+        // of a particular JavaScript engine.
     }
 
     private JSONArray listVersions() throws Exception {
