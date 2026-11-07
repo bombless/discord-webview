@@ -158,8 +158,8 @@ public final class ScriptServer implements AutoCloseable {
         ByteArrayOutputStream line = new ByteArrayOutputStream();
         int value;
         while ((value = input.read()) != -1) {
-            if (value == '\\n') break;
-            if (value != '\\r') line.write(value);
+            if (value == '\n') break;
+            if (value != '\r') line.write(value);
             if (line.size() > 8192) throw new IllegalArgumentException("HTTP header too large");
         }
         if (value == -1 && line.size() == 0) return null;
