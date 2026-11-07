@@ -24,7 +24,7 @@
       if (previous) previous.remove();
       const script = document.createElement('script');
       script.id = '__user_script';
-      script.textContent = source + '\\n//# sourceURL=app.js';
+      script.textContent = source + '\n//# sourceURL=app.js';
       script.onerror = () => { document.getElementById('runtime-status').textContent = 'Script error'; };
       document.body.appendChild(script);
     };
