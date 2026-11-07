@@ -39,7 +39,9 @@ Forward the device's loopback port:
 adb forward tcp:8765 tcp:8765
 ```
 
-Open **http://127.0.0.1:8765/** on your PC. Edit the single `app.js` script and press **Apply**.\n\nFor Chrome DevTools on the actual Android WebView, connect USB debugging, open `chrome://inspect/#devices` on the PC, and choose **Inspect** for Discord WebView Lab.
+Open **http://127.0.0.1:8765/** on your PC. Edit the single `app.js` script and press **Apply**.
+
+For Chrome DevTools on the actual Android WebView, connect USB debugging, open `chrome://inspect/#devices` on the PC, and choose **Inspect** for Discord WebView Lab.
 
 The editor also exposes a JSON API:
 
