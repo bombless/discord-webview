@@ -17,11 +17,11 @@ A developer-oriented Android WebView shell with a single hot-swappable JavaScrip
 
 ## Build
 
-If the wrapper scripts are not present in your checkout, generate them once with Gradle 9.1.0:
+The included bootstrap launcher downloads and runs Gradle 9.1.0 (requires curl and unzip):
 
 ```bash
 gradle wrapper --gradle-version 9.1.0
-./gradlew assembleDebug
+sh gradlew assembleDebug
 ```
 
 Install:
