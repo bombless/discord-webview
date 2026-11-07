@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>Discord WebView Lab</title>
+  <style>
+    *{box-sizing:border-box}body{margin:0;background:#313338;color:#f2f3f5;font:15px system-ui,sans-serif}
+    #runtime-status{position:fixed;right:16px;top:14px;padding:6px 10px;border-radius:20px;background:#1e1f22;color:#b5bac1;font-size:12px}
+    #app{min-height:100vh;padding:56px 24px 24px}
+    .shell{max-width:760px;margin:8vh auto;background:#2b2d31;border:1px solid #41434a;border-radius:16px;padding:28px}
+    h1{margin-top:0;font-size:25px}.muted{color:#b5bac1;line-height:1.6}
+    code{background:#1e1f22;padding:3px 6px;border-radius:5px}
+  </style>
+</head>
+<body>
+  <div id="runtime-status">JS runtime · starting</div>
+  <main id="app"><section class="shell"><h1>Discord WebView Lab</h1><p class="muted">Loading the active <code>app.js</code> script…</p></section></main>
+  <script>
+    window.__applyUserScript = function(source) {
+      const previous = document.getElementById('__user_script');
+      if (previous) previous.remove();
+      const script = document.createElement('script');
+      script.id = '__user_script';
+      script.textContent = source + '\n//# sourceURL=app.js';
+      script.onerror = () => { document.getElementById('runtime-status').textContent = 'Script error'; };
+      document.body.appendChild(script);
+    };
+    fetch('file:///android_asset/app.js').then(r => r.text()).then(window.__applyUserScript).catch(() => {
+      document.getElementById('runtime-status').textContent = 'Waiting for script server';
+    });
+  </script>
+</body>
+</html>
