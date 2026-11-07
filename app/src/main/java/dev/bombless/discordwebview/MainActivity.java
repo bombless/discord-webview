@@ -29,7 +29,17 @@ public final class MainActivity extends Activity {
         settings.setDefaultTextEncodingName("UTF-8");
         WebView.setWebContentsDebuggingEnabled(true);
 
-        webView.setWebViewClient(new WebViewClient());
+        webView.setWebViewClient(new WebViewClient() {
+            @Override
+            public void onPageFinished(WebView view, String url) {
+                super.onPageFinished(view, url);
+                try {
+                    if (server != null) applyScript(server.getCurrentScript());
+                } catch (Exception e) {
+                    android.util.Log.e("DiscordWebView", "Unable to load active script", e);
+                }
+            }
+        });
         webView.setWebChromeClient(new WebChromeClient() {
             @Override
             public boolean onConsoleMessage(ConsoleMessage message) {
