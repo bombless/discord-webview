@@ -107,7 +107,11 @@ public final class ScriptServer implements AutoCloseable {
         return files[0].getName().replace(".js", "");
     }
 
-    private void persistActiveVersion() throws Exception {\n        Files.writeString(activeVersionFile.toPath(), activeVersion, StandardCharsets.UTF_8);\n    }\n\n    private synchronized String saveVersion(String script) throws Exception {
+    private void persistActiveVersion() throws Exception {
+        Files.writeString(activeVersionFile.toPath(), activeVersion, StandardCharsets.UTF_8);
+    }
+
+    private synchronized String saveVersion(String script) throws Exception {
         String stamp = new SimpleDateFormat("yyyyMMdd'T'HHmmss", Locale.US).format(new Date());
         int suffix = 1;
         String id;
