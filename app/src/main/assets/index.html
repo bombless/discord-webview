@@ -18,18 +18,16 @@
   <div id="runtime-status">JS runtime · starting</div>
   <main id="app"><section class="shell"><h1>Discord WebView Lab</h1><p class="muted">Loading the active <code>app.js</code> script…</p></section></main>
   <script>
+    // MainActivity injects the persisted app.js after this page finishes loading.
     window.__applyUserScript = function(source) {
       const previous = document.getElementById('__user_script');
       if (previous) previous.remove();
       const script = document.createElement('script');
       script.id = '__user_script';
-      script.textContent = source + '\n//# sourceURL=app.js';
+      script.textContent = source + '\\n//# sourceURL=app.js';
       script.onerror = () => { document.getElementById('runtime-status').textContent = 'Script error'; };
       document.body.appendChild(script);
     };
-    fetch('file:///android_asset/app.js').then(r => r.text()).then(window.__applyUserScript).catch(() => {
-      document.getElementById('runtime-status').textContent = 'Waiting for script server';
-    });
   </script>
 </body>
 </html>
