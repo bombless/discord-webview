@@ -251,14 +251,14 @@ main{max-width:1200px;margin:24px auto;padding:0 20px}.muted{color:#9ca3af}.pill
 #status{margin-left:auto;color:#9ca3af}@media(max-width:800px){.layout{grid-template-columns:1fr}}
 </style></head><body><header><div><b>◈ Discord WebView · Script Studio</b><div class="muted">Single-file live runtime</div></div><span class="pill" id="active">Loading…</span></header>
 <main><div class="toolbar"><span class="muted">Editing <b>app.js</b></span><button id="apply">Apply script</button><button class="secondary" id="reload">Reload</button><span id="status">Connecting…</span></div>
-<div class="layout"><section><textarea id="editor" spellcheck="false"></textarea><p class="muted">Changes are syntax-checked in a temporary WebView context before activation. Every accepted update is versioned.</p></section>
+<div class="layout"><section><textarea id="editor" spellcheck="false"></textarea><p class="muted">The editor checks JavaScript syntax before sending. Every accepted update is versioned.</p></section>
 <aside class="panel"><b>Version history</b><p class="muted">Select a version to roll back.</p><div class="versions" id="versions"></div></aside></div></main>
 <script>
 const $=id=>document.getElementById(id);let active='';
 async function api(path,opts){const r=await fetch(path,opts);const data=await r.json().catch(()=>({}));if(!r.ok)throw Error(data.error||r.statusText);return data}
 async function refresh(){const s=await api('/api/state');active=s.activeVersion;$('active').textContent='Active · '+active;const vs=await api('/api/versions');$('versions').innerHTML='';vs.forEach(v=>{const el=document.createElement('div');el.className='version';const title=document.createElement('b');title.textContent=v.id+(v.active?' · active':'');const small=document.createElement('small');small.textContent=(v.bytes/1024).toFixed(1)+' KB · '+new Date(v.modified).toLocaleString();el.append(title,small);if(!v.active){const b=document.createElement('button');b.className='secondary';b.textContent='Rollback';b.onclick=async()=>{if(!confirm('Restore '+v.id+'?'))return;try{await api('/api/rollback/'+v.id,{method:'POST'});await loadScript();await refresh();$('status').textContent='Rolled back'}catch(e){$('status').textContent=e.message}};el.append(b)}$('versions').append(el)})}
 async function loadScript(){$('editor').value=await (await fetch('/api/script')).text()}
-$('apply').onclick=async()=>{try{$('status').textContent='Validating…';const r=await api('/api/script',{method:'PUT',headers:{'Content-Type':'application/javascript'},body:$('editor').value});$('status').textContent='Applied · '+r.version;await refresh()}catch(e){$('status').textContent='Error · '+e.message}};
+$('apply').onclick=async()=>{try{$('status').textContent='Checking syntax…';new Function($('editor').value);$('status').textContent='Applying…';const r=await api('/api/script',{method:'PUT',headers:{'Content-Type':'application/javascript'},body:$('editor').value});$('status').textContent='Applied · '+r.version;await refresh()}catch(e){$('status').textContent='Error · '+e.message}};
 $('reload').onclick=async()=>{await loadScript();await refresh();$('status').textContent='Reloaded'};
 (async()=>{try{await loadScript();await refresh();$('status').textContent='Connected'}catch(e){$('status').textContent=e.message}})();
 </script></body></html>""";
