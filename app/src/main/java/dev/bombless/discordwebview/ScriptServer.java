@@ -38,6 +38,7 @@ public final class ScriptServer implements AutoCloseable {
     private String activeVersion = "default";
 
     public ScriptServer(Context context, File root, Consumer<String> onScript) {
+        this.assetContext = context.getApplicationContext();
         this.root = root;
         this.versionsDir = new File(root, "versions");
         this.currentFile = new File(root, "app.js");
@@ -86,6 +87,10 @@ public final class ScriptServer implements AutoCloseable {
     }
 
     private Context assetContext;
+    public String getCurrentScript() throws Exception {
+        return readCurrent();
+    }
+
     private String readCurrent() throws Exception {
         return Files.readString(currentFile.toPath(), StandardCharsets.UTF_8);
     }
@@ -112,8 +117,8 @@ public final class ScriptServer implements AutoCloseable {
     private void handle(Socket socket) {
         try (socket) {
             socket.setSoTimeout(10000);
-            BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8));
-            String requestLine = reader.readLine();
+            java.io.InputStream input = socket.getInputStream();
+            String requestLine = readHttpLine(input);
             if (requestLine == null) return;
             String[] parts = requestLine.split(" ");
             if (parts.length < 2) return;
@@ -121,16 +126,16 @@ public final class ScriptServer implements AutoCloseable {
             String path = parts[1].split("\\?", 2)[0];
             int contentLength = 0;
             String line;
-            while ((line = reader.readLine()) != null && !line.isEmpty()) {
+            while ((line = readHttpLine(input)) != null && !line.isEmpty()) {
                 if (line.toLowerCase(Locale.ROOT).startsWith("content-length:")) {
                     contentLength = Integer.parseInt(line.substring(line.indexOf(':') + 1).trim());
                 }
             }
             if (contentLength > MAX_BODY) {
-                respond(socket, 413, "application/json", "{\\"error\\":\\"body too large\\"}");
+                respond(socket, 413, "application/json", new JSONObject().put("error", "body too large").toString());
                 return;
             }
-            byte[] body = readBody(socket, contentLength);
+            byte[] body = readBody(input, contentLength);
             route(socket, method, path, body);
         } catch (Exception e) {
             android.util.Log.e("ScriptServer", "Request failed", e);
@@ -139,11 +144,23 @@ public final class ScriptServer implements AutoCloseable {
         }
     }
 
-    private byte[] readBody(Socket socket, int length) throws Exception {
+    private String readHttpLine(java.io.InputStream input) throws Exception {
+        ByteArrayOutputStream line = new ByteArrayOutputStream();
+        int value;
+        while ((value = input.read()) != -1) {
+            if (value == '\\n') break;
+            if (value != '\\r') line.write(value);
+            if (line.size() > 8192) throw new IllegalArgumentException("HTTP header too large");
+        }
+        if (value == -1 && line.size() == 0) return null;
+        return line.toString(StandardCharsets.UTF_8);
+    }
+
+    private byte[] readBody(java.io.InputStream input, int length) throws Exception {
         byte[] body = new byte[length];
         int offset = 0;
         while (offset < length) {
-            int n = socket.getInputStream().read(body, offset, length - offset);
+            int n = input.read(body, offset, length - offset);
             if (n < 0) throw new java.io.EOFException("Incomplete request body");
             offset += n;
         }
@@ -176,12 +193,12 @@ public final class ScriptServer implements AutoCloseable {
         } else if (path.startsWith("/api/rollback/") && method.equals("POST")) {
             String id = path.substring("/api/rollback/".length());
             if (!VERSION_ID.matcher(id).matches()) {
-                respond(socket, 400, "application/json", "{\\"error\\":\\"invalid version id\\"}");
+                respond(socket, 400, "application/json", new JSONObject().put("error", "invalid version id").toString());
                 return;
             }
             File versionFile = new File(versionsDir, id + ".js");
             if (!versionFile.isFile()) {
-                respond(socket, 404, "application/json", "{\\"error\\":\\"version not found\\"}");
+                respond(socket, 404, "application/json", new JSONObject().put("error", "version not found").toString());
                 return;
             }
             String script = Files.readString(versionFile.toPath(), StandardCharsets.UTF_8);
@@ -191,7 +208,7 @@ public final class ScriptServer implements AutoCloseable {
             onScript.accept(script);
             respond(socket, 200, "application/json", new JSONObject().put("ok", true).put("version", id).toString());
         } else {
-            respond(socket, 404, "application/json", "{\\"error\\":\\"not found\\"}");
+            respond(socket, 404, "application/json", new JSONObject().put("error", "not found").toString());
         }
     }
 
