@@ -13,14 +13,13 @@ A developer-oriented Android WebView shell with a single hot-swappable JavaScrip
 
 - JDK 17+
 - Android SDK with API 36
-- Gradle Wrapper 9.1.0
+- Gradle 9.1.0
 
 ## Build
 
-The included bootstrap launcher downloads and runs Gradle 9.1.0 (requires curl and unzip):
+The included launchers download and run Gradle 9.1.0. On Linux/macOS, use `sh gradlew` (requires curl and unzip); on Windows, use `gradlew.bat` (PowerShell):
 
 ```bash
-gradle wrapper --gradle-version 9.1.0
 sh gradlew assembleDebug  # Windows: gradlew.bat assembleDebug
 ```
 
@@ -47,7 +46,7 @@ The editor also exposes a JSON API:
 
 - `GET /api/state` — active version and server status
 - `GET /api/script` — current script
-- `PUT /api/script` — validate, save a new version, and apply
+- `PUT /api/script` — save a new version and apply (the desktop editor checks syntax before sending)
 - `GET /api/versions` — version history
 - `POST /api/rollback/{versionId}` — restore a prior version
 
