@@ -31,6 +31,7 @@ public final class ScriptServer implements AutoCloseable {
     private final File root;
     private final File versionsDir;
     private final File currentFile;
+    private final File activeVersionFile;
     private final Consumer<String> onScript;
     private final ExecutorService clients = Executors.newCachedThreadPool();
     private volatile boolean running;
@@ -42,6 +43,7 @@ public final class ScriptServer implements AutoCloseable {
         this.root = root;
         this.versionsDir = new File(root, "versions");
         this.currentFile = new File(root, "app.js");
+        this.activeVersionFile = new File(root, "active-version.txt");
         this.onScript = onScript;
     }
 
@@ -52,8 +54,11 @@ public final class ScriptServer implements AutoCloseable {
             String initial = readAsset();
             Files.writeString(currentFile.toPath(), initial, StandardCharsets.UTF_8);
             saveVersion(initial);
+        } else if (activeVersionFile.isFile()) {
+            activeVersion = Files.readString(activeVersionFile.toPath(), StandardCharsets.UTF_8).trim();
         } else {
             activeVersion = findActiveVersion();
+            persistActiveVersion();
         }
         onScript.accept(readCurrent());
         server = new ServerSocket(PORT, 20, InetAddress.getByName("127.0.0.1"));
@@ -102,7 +107,7 @@ public final class ScriptServer implements AutoCloseable {
         return files[0].getName().replace(".js", "");
     }
 
-    private synchronized String saveVersion(String script) throws Exception {
+    private void persistActiveVersion() throws Exception {\n        Files.writeString(activeVersionFile.toPath(), activeVersion, StandardCharsets.UTF_8);\n    }\n\n    private synchronized String saveVersion(String script) throws Exception {
         String stamp = new SimpleDateFormat("yyyyMMdd'T'HHmmss", Locale.US).format(new Date());
         int suffix = 1;
         String id;
@@ -111,6 +116,7 @@ public final class ScriptServer implements AutoCloseable {
         } while (new File(versionsDir, id + ".js").exists());
         Files.writeString(new File(versionsDir, id + ".js").toPath(), script, StandardCharsets.UTF_8);
         activeVersion = id;
+        persistActiveVersion();
         return id;
     }
 
@@ -205,6 +211,7 @@ public final class ScriptServer implements AutoCloseable {
             validateSyntax(script);
             Files.writeString(currentFile.toPath(), script, StandardCharsets.UTF_8);
             activeVersion = id;
+            persistActiveVersion();
             onScript.accept(script);
             respond(socket, 200, "application/json", new JSONObject().put("ok", true).put("version", id).toString());
         } else {
